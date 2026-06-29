@@ -14,15 +14,16 @@ provider for both chat completion and embeddings, and structured around
 
 ## Features
 
-- 🧩 **Clean Architecture** - domain, application, infrastructure, and delivery layers with a strict inward dependency rule.
-- 🔌 **Pluggable by design** - LLM, embedder, vector store, text splitter, and job repository are interfaces (ports); swap implementations without touching business logic.
-- 🤖 **OpenAI via langchaingo** - any OpenAI chat model (configurable through `LLM_MODEL`) plus `text-embedding-3-small` embeddings.
-- ⚡ **Async ingestion with polling** - `POST` returns immediately with a job ID; `PUT` accepts a raw file and ingests it in **batched/chunked background** processing; poll job progress via `GET /jobs/{id}`.
-- 🗂️ **Document management** - list ingested documents and delete a document (and all its chunks) by ID.
-- 🗃️ **Zero-setup vector store** - dependency-free in-memory cosine-similarity store; perfect for local dev and tests, trivially replaceable with pgvector/Qdrant.
-- 🌐 **Standard-library HTTP** - method-aware routing (Go 1.22+ `ServeMux`), structured logging (`log/slog`), panic recovery, and graceful shutdown.
-- 🧪 **Tested core** - use cases and the store are unit-tested with fakes (no network required).
-- 🐳 **Container-ready** - multi-stage `Dockerfile` (distroless) and `docker-compose.yml`.
+-  **Clean Architecture** - domain, application, infrastructure, and delivery layers with a strict inward dependency rule.
+-  **Pluggable by design** - LLM, embedder, vector store, text splitter, and job repository are interfaces (ports); swap implementations without touching business logic.
+-  **OpenAI via langchaingo** - any OpenAI chat model (configurable through `LLM_MODEL`) plus `text-embedding-3-small` embeddings.
+-  **Async ingestion with polling** - `POST` returns immediately with a job ID; `PUT` accepts a raw file and ingests it in **batched/chunked background** processing; poll job progress via `GET /jobs/{id}`.
+-  **Document management** - list ingested documents and delete a document (and all its chunks) by ID.
+-  **Zero-setup vector store** - dependency-free in-memory cosine-similarity store; perfect for local dev and tests, trivially replaceable with pgvector/Qdrant.
+-  **Standard-library HTTP** - method-aware routing (Go 1.22+ `ServeMux`), structured logging (`log/slog`), panic recovery, and graceful shutdown.
+-  **Interactive API docs** - OpenAPI 2.0 generated from handler annotations (swaggo) and served as **Swagger UI at `/docs`**.
+-  **Tested core** - use cases and the store are unit-tested with fakes (no network required).
+-  **Container-ready** - multi-stage `Dockerfile` (distroless) and `docker-compose.yml`.
 
 ---
 
@@ -106,6 +107,9 @@ rag-golang-clean-arch/
 │           └── dto/                 # request/response shapes
 ├── pkg/
 │   └── logger/                      # slog setup
+├── docs/                            # generated OpenAPI spec (swaggo) served at /docs
+│   ├── docs.go
+│   └── swagger.json
 ├── Dockerfile
 ├── docker-compose.yml
 ├── Makefile
@@ -120,6 +124,7 @@ rag-golang-clean-arch/
 - **langchaingo** - LLM, embeddings, and text-splitting abstractions
 - **OpenAI** - chat completion (`gpt-4o-mini` by default) and `text-embedding-3-small`
 - **godotenv** - `.env` loading for local development
+- **swaggo** (`swag` + `http-swagger`) - annotation-driven OpenAPI 2.0 and Swagger UI at `/docs`
 
 ---
 
@@ -180,6 +185,7 @@ All configuration is read from environment variables (a local `.env` is loaded a
 
 | Method & path | Purpose |
 |---|---|
+| `GET /docs` | **Swagger UI** (interactive API docs); raw spec at `GET /docs/doc.json` |
 | `GET /health` | Liveness check |
 | `POST /api/v1/documents` | Queue inline-content ingestion → **200** + job ID |
 | `PUT /api/v1/documents` | Chunked async **file** ingestion (raw body) -> **202** + job ID |
@@ -187,6 +193,21 @@ All configuration is read from environment variables (a local `.env` is loaded a
 | `DELETE /api/v1/documents/{id}` | Delete a document and all its chunks |
 | `POST /api/v1/query` | Ask a grounded question |
 | `GET /api/v1/jobs/{id}` | **Poll** ingestion job status/progress |
+
+### Interactive docs (Swagger UI)
+
+With the server running, open **<http://localhost:8080/docs>** for interactive Swagger UI
+(try-it-out included). The raw OpenAPI 2.0 spec is served at
+`http://localhost:8080/docs/doc.json` and also committed under [`docs/`](docs/) for
+offline import (Postman, Insomnia, codegen).
+
+The spec is generated from the `@`-annotations on the handlers and `cmd/server/main.go`.
+After changing those annotations, regenerate it:
+
+```bash
+go install github.com/swaggo/swag/cmd/swag@latest
+make swag            # or: swag init -g cmd/server/main.go -o docs
+```
 
 ### `GET /health`
 

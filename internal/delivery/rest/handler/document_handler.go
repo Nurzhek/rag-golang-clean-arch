@@ -30,6 +30,17 @@ func NewDocumentHandler(ingest usecase.IngestUseCase, docs usecase.DocumentUseCa
 
 // Ingest handles POST /api/v1/documents. It accepts inline JSON content, queues
 // asynchronous ingestion, and returns 200 immediately with a job ID to poll.
+//
+// @Summary     Queue inline document ingestion
+// @Description Accepts inline text content, queues asynchronous embedding + storage, and returns a job ID to poll.
+// @Tags        documents
+// @Accept      json
+// @Produce     json
+// @Param       request body dto.IngestRequest true "Document content and optional metadata"
+// @Success     200 {object} dto.JobAcceptedResponse
+// @Failure     400 {object} dto.ErrorResponse
+// @Failure     500 {object} dto.ErrorResponse
+// @Router      /api/v1/documents [post]
 func (h *DocumentHandler) Ingest(w http.ResponseWriter, r *http.Request) {
 	var req dto.IngestRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -52,6 +63,20 @@ func (h *DocumentHandler) Ingest(w http.ResponseWriter, r *http.Request) {
 // IngestFile handles PUT /api/v1/documents. It accepts a raw file body and queues
 // chunked asynchronous ingestion in the background, returning 202 with a job ID.
 // Query parameters become document metadata, e.g. ?source=manual.txt&title=Manual.
+//
+// @Summary     Upload a file for chunked async ingestion
+// @Description Accepts a raw request body (the file content) and queues chunked background ingestion. Query parameters are stored as document metadata.
+// @Tags        documents
+// @Accept      plain
+// @Produce     json
+// @Param       source query string false "Optional metadata: source name"
+// @Param       title  query string false "Optional metadata: title"
+// @Param       file   body  string true  "Raw file content"
+// @Success     202 {object} dto.JobAcceptedResponse
+// @Failure     400 {object} dto.ErrorResponse
+// @Failure     413 {object} dto.ErrorResponse
+// @Failure     500 {object} dto.ErrorResponse
+// @Router      /api/v1/documents [put]
 func (h *DocumentHandler) IngestFile(w http.ResponseWriter, r *http.Request) {
 	body, err := io.ReadAll(http.MaxBytesReader(w, r.Body, maxFileBytes))
 	if err != nil {
@@ -79,6 +104,14 @@ func (h *DocumentHandler) IngestFile(w http.ResponseWriter, r *http.Request) {
 }
 
 // List handles GET /api/v1/documents.
+//
+// @Summary     List ingested documents
+// @Description Returns all ingested documents with their chunk counts and metadata.
+// @Tags        documents
+// @Produce     json
+// @Success     200 {object} dto.ListDocumentsResponse
+// @Failure     500 {object} dto.ErrorResponse
+// @Router      /api/v1/documents [get]
 func (h *DocumentHandler) List(w http.ResponseWriter, r *http.Request) {
 	docs, err := h.docs.List(r.Context())
 	if err != nil {
@@ -101,6 +134,16 @@ func (h *DocumentHandler) List(w http.ResponseWriter, r *http.Request) {
 }
 
 // Delete handles DELETE /api/v1/documents/{id}.
+//
+// @Summary     Delete a document
+// @Description Deletes a document and all of its chunks by source document ID.
+// @Tags        documents
+// @Produce     json
+// @Param       id path string true "Document ID"
+// @Success     200 {object} dto.DeleteResponse
+// @Failure     404 {object} dto.ErrorResponse
+// @Failure     500 {object} dto.ErrorResponse
+// @Router      /api/v1/documents/{id} [delete]
 func (h *DocumentHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	id := r.PathValue("id")
 	deleted, err := h.docs.Delete(r.Context(), id)

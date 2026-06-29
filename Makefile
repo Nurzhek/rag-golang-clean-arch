@@ -1,4 +1,4 @@
-.PHONY: help tidy run build test vet fmt docker-build docker-up docker-down
+.PHONY: help tidy run build test vet fmt swag docker-build docker-up docker-down
 
 BINARY := rag-server
 
@@ -22,6 +22,9 @@ vet: ## Run go vet
 
 fmt: ## Format the code
 	go fmt ./...
+
+swag: ## Regenerate the OpenAPI spec in ./docs (requires github.com/swaggo/swag/cmd/swag)
+	swag init -g cmd/server/main.go -o docs
 
 docker-build: ## Build the Docker image
 	docker build -t $(BINARY):latest .

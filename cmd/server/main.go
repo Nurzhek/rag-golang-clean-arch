@@ -27,6 +27,11 @@ import (
 	"github.com/Nurzhek/rag-golang-clean-arch/pkg/logger"
 )
 
+// @title       RAG Backend API
+// @version     1.0
+// @description Retrieval-Augmented Generation backend (Clean Architecture, langchaingo + OpenAI).
+// @description Ingest documents, run chunked async uploads, poll job status, and ask grounded questions.
+// @BasePath    /
 func main() {
 	if err := run(); err != nil {
 		fmt.Fprintln(os.Stderr, "fatal:", err)

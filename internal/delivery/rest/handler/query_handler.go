@@ -19,6 +19,18 @@ func NewQueryHandler(query usecase.QueryUseCase) *QueryHandler {
 }
 
 // Query handles POST /api/v1/query.
+//
+// @Summary     Ask a question (RAG)
+// @Description Embeds the question, retrieves the most relevant chunks, and generates a grounded answer with sources.
+// @Tags        query
+// @Accept      json
+// @Produce     json
+// @Param       request body dto.QueryRequest true "Question and optional top_k"
+// @Success     200 {object} dto.QueryResponse
+// @Failure     400 {object} dto.ErrorResponse
+// @Failure     404 {object} dto.ErrorResponse
+// @Failure     500 {object} dto.ErrorResponse
+// @Router      /api/v1/query [post]
 func (h *QueryHandler) Query(w http.ResponseWriter, r *http.Request) {
 	var req dto.QueryRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {

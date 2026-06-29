@@ -4,6 +4,9 @@ import (
 	"log/slog"
 	"net/http"
 
+	httpSwagger "github.com/swaggo/http-swagger/v2"
+
+	_ "github.com/Nurzhek/rag-golang-clean-arch/docs" // generated OpenAPI spec, registered via init()
 	"github.com/Nurzhek/rag-golang-clean-arch/internal/delivery/rest/handler"
 	"github.com/Nurzhek/rag-golang-clean-arch/internal/delivery/rest/middleware"
 )
@@ -14,6 +17,12 @@ func NewRouter(docs *handler.DocumentHandler, query *handler.QueryHandler, jobs 
 	mux := http.NewServeMux()
 
 	mux.HandleFunc("GET /health", handler.Health)
+
+	// API documentation (Swagger UI at /docs, OpenAPI spec at /docs/doc.json).
+	mux.HandleFunc("GET /docs", func(w http.ResponseWriter, r *http.Request) {
+		http.Redirect(w, r, "/docs/", http.StatusMovedPermanently)
+	})
+	mux.Handle("GET /docs/", httpSwagger.Handler(httpSwagger.URL("/docs/doc.json")))
 
 	// Documents
 	mux.HandleFunc("POST /api/v1/documents", docs.Ingest)      // queue inline ingest -> 200 + job
