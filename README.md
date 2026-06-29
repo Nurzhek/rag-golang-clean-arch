@@ -294,7 +294,3 @@ docker run --rm -p 8080:8080 --env-file .env rag-server:latest
 ```
 
 ---
-
-## License
-
-[MIT](LICENSE) © Nurzhek
