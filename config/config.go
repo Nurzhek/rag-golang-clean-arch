@@ -21,9 +21,10 @@ type Config struct {
 	LLMTemperature float64
 	EmbeddingModel string
 
-	ChunkSize     int
-	ChunkOverlap  int
-	RetrievalTopK int
+	ChunkSize      int
+	ChunkOverlap   int
+	RetrievalTopK  int
+	EmbedBatchSize int
 }
 
 // Load reads configuration from the environment, applying defaults and
@@ -42,6 +43,7 @@ func Load() (*Config, error) {
 		ChunkSize:      getEnvInt("CHUNK_SIZE", 1000),
 		ChunkOverlap:   getEnvInt("CHUNK_OVERLAP", 200),
 		RetrievalTopK:  getEnvInt("RETRIEVAL_TOP_K", 4),
+		EmbedBatchSize: getEnvInt("EMBED_BATCH_SIZE", 64),
 	}
 
 	if cfg.OpenAIAPIKey == "" {

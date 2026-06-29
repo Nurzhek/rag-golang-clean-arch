@@ -16,4 +16,10 @@ type VectorStore interface {
 	// Search returns the topK documents most similar to queryVector, ordered
 	// by descending similarity.
 	Search(ctx context.Context, queryVector []float32, topK int) ([]entity.ScoredDocument, error)
+	// List returns every stored chunk. Callers group by SourceID to present
+	// document-level views.
+	List(ctx context.Context) ([]entity.Document, error)
+	// Delete removes all chunks belonging to the given source document and
+	// reports how many were removed.
+	Delete(ctx context.Context, sourceID string) (int, error)
 }

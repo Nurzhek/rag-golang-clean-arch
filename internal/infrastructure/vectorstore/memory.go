@@ -78,6 +78,36 @@ func (m *Memory) Search(_ context.Context, queryVector []float32, topK int) ([]e
 	return scored, nil
 }
 
+// List returns every stored chunk.
+func (m *Memory) List(_ context.Context) ([]entity.Document, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	out := make([]entity.Document, 0, len(m.records))
+	for _, r := range m.records {
+		out = append(out, r.doc)
+	}
+	return out, nil
+}
+
+// Delete removes all chunks for the given source document and returns the count.
+func (m *Memory) Delete(_ context.Context, sourceID string) (int, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	kept := m.records[:0]
+	deleted := 0
+	for _, r := range m.records {
+		if r.doc.SourceID == sourceID {
+			deleted++
+			continue
+		}
+		kept = append(kept, r)
+	}
+	m.records = kept
+	return deleted, nil
+}
+
 func cosineSimilarity(a, b []float32) float32 {
 	if len(a) != len(b) || len(a) == 0 {
 		return 0

@@ -45,3 +45,41 @@ func TestMemoryAddRejectsLengthMismatch(t *testing.T) {
 		t.Fatal("expected error on length mismatch")
 	}
 }
+
+func TestMemoryListAndDeleteBySource(t *testing.T) {
+	store := NewMemory()
+	docs := []entity.Document{
+		{ID: "c1", SourceID: "a"},
+		{ID: "c2", SourceID: "a"},
+		{ID: "c3", SourceID: "b"},
+	}
+	vectors := [][]float32{{1, 0}, {0, 1}, {1, 1}}
+	if err := store.Add(context.Background(), docs, vectors); err != nil {
+		t.Fatalf("Add: %v", err)
+	}
+
+	list, err := store.List(context.Background())
+	if err != nil {
+		t.Fatalf("List: %v", err)
+	}
+	if len(list) != 3 {
+		t.Fatalf("expected 3 chunks, got %d", len(list))
+	}
+
+	deleted, err := store.Delete(context.Background(), "a")
+	if err != nil {
+		t.Fatalf("Delete: %v", err)
+	}
+	if deleted != 2 {
+		t.Errorf("expected 2 deleted, got %d", deleted)
+	}
+
+	remaining, _ := store.List(context.Background())
+	if len(remaining) != 1 {
+		t.Errorf("expected 1 remaining chunk, got %d", len(remaining))
+	}
+
+	if n, _ := store.Delete(context.Background(), "missing"); n != 0 {
+		t.Errorf("expected 0 deleted for missing source, got %d", n)
+	}
+}

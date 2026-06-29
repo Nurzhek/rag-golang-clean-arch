@@ -11,4 +11,8 @@ var (
 	ErrEmptyContent = errors.New("document content must not be empty")
 	// ErrEmptyQuestion is returned when a query is called with a blank question.
 	ErrEmptyQuestion = errors.New("question must not be empty")
+	// ErrDocumentNotFound is returned when a document ID matches no stored chunks.
+	ErrDocumentNotFound = errors.New("document not found")
+	// ErrJobNotFound is returned when a job ID is unknown.
+	ErrJobNotFound = errors.New("job not found")
 )

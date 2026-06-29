@@ -8,11 +8,6 @@ type IngestInput struct {
 	Metadata map[string]string
 }
 
-// IngestOutput reports the result of an ingest operation.
-type IngestOutput struct {
-	ChunksCreated int
-}
-
 // QueryInput is the application-level request to answer a question via RAG.
 type QueryInput struct {
 	Question string

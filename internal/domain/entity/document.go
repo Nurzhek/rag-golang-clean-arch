@@ -6,6 +6,9 @@ package entity
 type Document struct {
 	// ID uniquely identifies the chunk within the store.
 	ID string
+	// SourceID groups every chunk that originated from the same ingested
+	// document, enabling listing and deletion at the document level.
+	SourceID string
 	// Content is the raw text of the chunk.
 	Content string
 	// Metadata carries arbitrary key/value annotations (e.g. source, title).
@@ -18,4 +21,12 @@ type Document struct {
 type ScoredDocument struct {
 	Document
 	Score float32
+}
+
+// DocumentSummary is an aggregate view of one ingested document: its source ID,
+// how many chunks it produced, and the metadata shared by those chunks.
+type DocumentSummary struct {
+	ID         string
+	ChunkCount int
+	Metadata   map[string]string
 }

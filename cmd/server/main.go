@@ -19,6 +19,7 @@ import (
 	"github.com/Nurzhek/rag-golang-clean-arch/internal/delivery/rest"
 	"github.com/Nurzhek/rag-golang-clean-arch/internal/delivery/rest/handler"
 	"github.com/Nurzhek/rag-golang-clean-arch/internal/infrastructure/embedding"
+	"github.com/Nurzhek/rag-golang-clean-arch/internal/infrastructure/jobstore"
 	"github.com/Nurzhek/rag-golang-clean-arch/internal/infrastructure/llm"
 	"github.com/Nurzhek/rag-golang-clean-arch/internal/infrastructure/splitter"
 	"github.com/Nurzhek/rag-golang-clean-arch/internal/infrastructure/vectorstore"
@@ -40,6 +41,7 @@ func run() error {
 	}
 
 	log := logger.New(cfg.LogLevel)
+	idgen := newIDGenerator()
 
 	// --- Infrastructure: adapters implementing the domain ports. ---
 	embedder, err := embedding.NewOpenAI(embedding.Config{
@@ -67,14 +69,21 @@ func run() error {
 	})
 
 	store := vectorstore.NewMemory()
+	jobs := jobstore.NewMemory()
 
 	// --- Use cases: application business rules. ---
-	ingestUC := usecase.NewIngestUseCase(textSplitter, embedder, store, newIDGenerator())
+	ingestUC := usecase.NewIngestUseCase(textSplitter, embedder, store, jobs, idgen, cfg.EmbedBatchSize, log)
+	documentUC := usecase.NewDocumentUseCase(store)
+	jobUC := usecase.NewJobUseCase(jobs)
 	queryUC := usecase.NewQueryUseCase(embedder, store, chat, usecase.DefaultPromptBuilder, cfg.RetrievalTopK)
 
 	// --- Delivery: HTTP transport. ---
-	ragHandler := handler.NewRAGHandler(ingestUC, queryUC)
-	router := rest.NewRouter(ragHandler, log)
+	router := rest.NewRouter(
+		handler.NewDocumentHandler(ingestUC, documentUC),
+		handler.NewQueryHandler(queryUC),
+		handler.NewJobHandler(jobUC),
+		log,
+	)
 
 	srv := &http.Server{
 		Addr:              ":" + cfg.HTTPPort,
@@ -106,7 +115,7 @@ func run() error {
 	return srv.Shutdown(shutdownCtx)
 }
 
-// newIDGenerator returns a generator of random hex IDs for stored chunks.
+// newIDGenerator returns a generator of random hex IDs for jobs, documents, and chunks.
 func newIDGenerator() usecase.IDGenerator {
 	return func() string {
 		b := make([]byte, 16)

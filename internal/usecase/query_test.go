@@ -9,8 +9,8 @@ import (
 	"github.com/Nurzhek/rag-golang-clean-arch/internal/usecase"
 )
 
-// The fakes below implement the domain ports, letting the query use case be
-// tested in full isolation — no OpenAI calls, no real vector store.
+// The fakes below implement the domain ports, letting the use cases be tested in
+// full isolation — no OpenAI calls, no real vector store.
 
 type fakeEmbedder struct{}
 
@@ -26,15 +26,30 @@ func (fakeEmbedder) EmbedQuery(_ context.Context, _ string) ([]float32, error) {
 	return []float32{1, 0}, nil
 }
 
-type fakeStore struct{ docs []entity.ScoredDocument }
+type fakeStore struct {
+	search []entity.ScoredDocument
+	list   []entity.Document
+}
 
 func (f fakeStore) Add(_ context.Context, _ []entity.Document, _ [][]float32) error { return nil }
 
 func (f fakeStore) Search(_ context.Context, _ []float32, topK int) ([]entity.ScoredDocument, error) {
-	if topK > len(f.docs) {
-		topK = len(f.docs)
+	if topK > len(f.search) {
+		topK = len(f.search)
 	}
-	return f.docs[:topK], nil
+	return f.search[:topK], nil
+}
+
+func (f fakeStore) List(_ context.Context) ([]entity.Document, error) { return f.list, nil }
+
+func (f fakeStore) Delete(_ context.Context, sourceID string) (int, error) {
+	n := 0
+	for _, d := range f.list {
+		if d.SourceID == sourceID {
+			n++
+		}
+	}
+	return n, nil
 }
 
 type fakeLLM struct{ lastPrompt string }
@@ -45,7 +60,7 @@ func (f *fakeLLM) Generate(_ context.Context, prompt string) (string, error) {
 }
 
 func TestQueryUseCaseReturnsAnswerAndSources(t *testing.T) {
-	store := fakeStore{docs: []entity.ScoredDocument{
+	store := fakeStore{search: []entity.ScoredDocument{
 		{Document: entity.Document{ID: "1", Content: "ground truth"}, Score: 0.9},
 	}}
 	llm := &fakeLLM{}
@@ -80,9 +95,6 @@ func TestQueryUseCaseReturnsErrWhenNoSources(t *testing.T) {
 	uc := usecase.NewQueryUseCase(fakeEmbedder{}, fakeStore{}, &fakeLLM{}, usecase.DefaultPromptBuilder, 4)
 
 	_, err := uc.Execute(context.Background(), usecase.QueryInput{Question: "anything"})
-	if err == nil {
-		t.Fatal("expected ErrNoRelevantDocuments")
-	}
 	if err != domain.ErrNoRelevantDocuments {
 		t.Errorf("expected ErrNoRelevantDocuments, got %v", err)
 	}
