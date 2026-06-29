@@ -1,0 +1,20 @@
+# Binaries
+/bin/
+*.exe
+*.out
+rag-server
+
+# Environment files (never commit secrets)
+.env
+.env.local
+*.env.local
+
+# Go
+vendor/
+*.test
+coverage.out
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/
