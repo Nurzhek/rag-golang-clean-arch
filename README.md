@@ -14,16 +14,16 @@ provider for both chat completion and embeddings, and structured around
 
 ## Features
 
--  **Clean Architecture** - domain, application, infrastructure, and delivery layers with a strict inward dependency rule.
--  **Pluggable by design** - LLM, embedder, vector store, text splitter, and job repository are interfaces (ports); swap implementations without touching business logic.
--  **OpenAI via langchaingo** - any OpenAI chat model (configurable through `LLM_MODEL`) plus `text-embedding-3-small` embeddings.
--  **Async ingestion with polling** - `POST` returns immediately with a job ID; `PUT` accepts a raw file and ingests it in **batched/chunked background** processing; poll job progress via `GET /jobs/{id}`.
--  **Document management** - list ingested documents and delete a document (and all its chunks) by ID.
--  **Zero-setup vector store** - dependency-free in-memory cosine-similarity store; perfect for local dev and tests, trivially replaceable with pgvector/Qdrant.
--  **Standard-library HTTP** - method-aware routing (Go 1.22+ `ServeMux`), structured logging (`log/slog`), panic recovery, and graceful shutdown.
--  **Interactive API docs** - OpenAPI 2.0 generated from handler annotations (swaggo) and served as **Swagger UI at `/docs`**.
--  **Tested core** - use cases and the store are unit-tested with fakes (no network required).
--  **Container-ready** - multi-stage `Dockerfile` (distroless) and `docker-compose.yml`.
+- **Clean Architecture** - domain, application, infrastructure, and delivery layers with a strict inward dependency rule.
+- **Pluggable by design** - LLM, embedder, vector store, text splitter, and job repository are interfaces (ports); swap implementations without touching business logic.
+- **OpenAI via langchaingo** - any OpenAI chat model (configurable through `LLM_MODEL`) plus `text-embedding-3-small` embeddings.
+- **Async ingestion with polling** - `POST` returns immediately with a job ID; `PUT` accepts a raw file and ingests it in **batched/chunked background** processing; poll job progress via `GET /jobs/{id}`.
+- **Document management** - list ingested documents and delete a document (and all its chunks) by ID.
+- **Zero-setup vector store** - dependency-free in-memory cosine-similarity store; perfect for local dev and tests, trivially replaceable with pgvector/Qdrant.
+- **Standard-library HTTP** - method-aware routing (Go 1.22+ `ServeMux`), structured logging (`log/slog`), panic recovery, and graceful shutdown.
+- **Interactive API docs** - OpenAPI 2.0 generated from handler annotations (swaggo) and served as **Swagger UI at `/docs`**.
+- **Tested core** - use cases and the store are unit-tested with fakes (no network required).
+- **Container-ready** - multi-stage `Dockerfile` (distroless) and `docker-compose.yml`.
 
 ---
 
@@ -61,15 +61,15 @@ that knows every concrete type — it wires them together.
 
 ### How the principles map to the code
 
-| Principle | Where you see it |
-|-----------|------------------|
-| **S**ingle Responsibility | One concern per type: `asyncIngestInteractor` runs the ingest pipeline, `Memory` stores vectors, `DocumentHandler`/`QueryHandler`/`JobHandler` each translate HTTP for one resource. |
-| **O**pen/Closed | Add a pgvector store, a Redis job store, or a different LLM by implementing a port — no existing code changes. `var _ port.X = (*T)(nil)` compile-time checks guard the contracts. |
-| **L**iskov Substitution | Any `port.VectorStore`/`port.JobRepository` is interchangeable; the use cases are oblivious. |
-| **I**nterface Segregation | Small, focused ports (`LLM`, `Embedder`, `VectorStore`, `TextSplitter`, `JobRepository`) instead of one fat "AI service" interface. |
-| **D**ependency Inversion | Use cases and handlers depend on interfaces; concretes are injected at the composition root. |
-| **DRY** | Shared JSON/error helpers and a single domain-error->HTTP mapping, one ingest pipeline reused by `POST` and `PUT`, one prompt builder, one config loader, reusable middleware chain. |
-| **KISS** | Standard-library HTTP and routing, an in-memory store and job repo, env-based config — no framework ceremony. |
+| Principle                       | Where you see it                                                                                                                                                                              |
+| ------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **S**ingle Responsibility | One concern per type:`asyncIngestInteractor` runs the ingest pipeline, `Memory` stores vectors, `DocumentHandler`/`QueryHandler`/`JobHandler` each translate HTTP for one resource. |
+| **O**pen/Closed           | Add a pgvector store, a Redis job store, or a different LLM by implementing a port — no existing code changes.`var _ port.X = (*T)(nil)` compile-time checks guard the contracts.          |
+| **L**iskov Substitution   | Any`port.VectorStore`/`port.JobRepository` is interchangeable; the use cases are oblivious.                                                                                               |
+| **I**nterface Segregation | Small, focused ports (`LLM`, `Embedder`, `VectorStore`, `TextSplitter`, `JobRepository`) instead of one fat "AI service" interface.                                                 |
+| **D**ependency Inversion  | Use cases and handlers depend on interfaces; concretes are injected at the composition root.                                                                                                  |
+| **DRY**                   | Shared JSON/error helpers and a single domain-error->HTTP mapping, one ingest pipeline reused by`POST` and `PUT`, one prompt builder, one config loader, reusable middleware chain.       |
+| **KISS**                  | Standard-library HTTP and routing, an in-memory store and job repo, env-based config — no framework ceremony.                                                                                |
 
 ---
 
@@ -148,7 +148,7 @@ cp .env.example .env
 ### 2. Install dependencies
 
 ```bash
-make tidy            # or: go mod tidy
+make tidy           # or: go mod tidy
 ```
 
 ### 3. Run
@@ -165,38 +165,38 @@ The server listens on `http://localhost:8080`.
 
 All configuration is read from environment variables (a local `.env` is loaded automatically).
 
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `HTTP_PORT` | `8080` | HTTP listen port |
-| `LOG_LEVEL` | `info` | `debug` \| `info` \| `warn` \| `error` |
-| `OPENAI_API_KEY` | - | **Required.** OpenAI API key |
-| `OPENAI_BASE_URL` | _(unset)_ | Override base URL (Azure OpenAI / proxy / compatible server) |
-| `LLM_MODEL` | `gpt-4o-mini` | Any OpenAI chat model (`gpt-4o`, `gpt-4-turbo`, `gpt-3.5-turbo`, …) |
-| `LLM_TEMPERATURE` | `0.2` | Sampling temperature for generation |
-| `EMBEDDING_MODEL` | `text-embedding-3-small` | OpenAI embedding model |
-| `CHUNK_SIZE` | `1000` | Characters per chunk |
-| `CHUNK_OVERLAP` | `200` | Overlap between adjacent chunks |
-| `RETRIEVAL_TOP_K` | `4` | Number of chunks retrieved per query |
-| `EMBED_BATCH_SIZE` | `64` | Chunks embedded+stored per batch during async ingestion |
+| Variable             | Default                    | Description                                                                |
+| -------------------- | -------------------------- | -------------------------------------------------------------------------- |
+| `HTTP_PORT`        | `8080`                   | HTTP listen port                                                           |
+| `LOG_LEVEL`        | `info`                   | `debug` \| `info` \| `warn` \| `error`                             |
+| `OPENAI_API_KEY`   | -                          | **Required.** OpenAI API key                                         |
+| `OPENAI_BASE_URL`  | _(unset)_                | Override base URL (Azure OpenAI / proxy / compatible server)               |
+| `LLM_MODEL`        | `gpt-4o-mini`            | Any OpenAI chat model (`gpt-4o`, `gpt-4-turbo`, `gpt-3.5-turbo`, …) |
+| `LLM_TEMPERATURE`  | `0.2`                    | Sampling temperature for generation                                        |
+| `EMBEDDING_MODEL`  | `text-embedding-3-small` | OpenAI embedding model                                                     |
+| `CHUNK_SIZE`       | `1000`                   | Characters per chunk                                                       |
+| `CHUNK_OVERLAP`    | `200`                    | Overlap between adjacent chunks                                            |
+| `RETRIEVAL_TOP_K`  | `4`                      | Number of chunks retrieved per query                                       |
+| `EMBED_BATCH_SIZE` | `64`                     | Chunks embedded+stored per batch during async ingestion                    |
 
 ---
 
 ## API reference
 
-| Method & path | Purpose |
-|---|---|
-| `GET /docs` | **Swagger UI** (interactive API docs); raw spec at `GET /docs/doc.json` |
-| `GET /health` | Liveness check |
-| `POST /api/v1/documents` | Queue inline-content ingestion → **200** + job ID |
-| `PUT /api/v1/documents` | Chunked async **file** ingestion (raw body) -> **202** + job ID |
-| `GET /api/v1/documents` | List ingested documents |
-| `DELETE /api/v1/documents/{id}` | Delete a document and all its chunks |
-| `POST /api/v1/query` | Ask a grounded question |
-| `GET /api/v1/jobs/{id}` | **Poll** ingestion job status/progress |
+| Method & path                     | Purpose                                                                         |
+| --------------------------------- | ------------------------------------------------------------------------------- |
+| `GET /docs`                     | **Swagger UI** (interactive API docs); raw spec at `GET /docs/doc.json` |
+| `GET /health`                   | Liveness check                                                                  |
+| `POST /api/v1/documents`        | Queue inline-content ingestion →**200** + job ID                         |
+| `PUT /api/v1/documents`         | Chunked async**file** ingestion (raw body) -> **202** + job ID      |
+| `GET /api/v1/documents`         | List ingested documents                                                         |
+| `DELETE /api/v1/documents/{id}` | Delete a document and all its chunks                                            |
+| `POST /api/v1/query`            | Ask a grounded question                                                         |
+| `GET /api/v1/jobs/{id}`         | **Poll** ingestion job status/progress                                    |
 
 ### Interactive docs (Swagger UI)
 
-With the server running, open **<http://localhost:8080/docs>** for interactive Swagger UI
+With the server running, open **[http://localhost:8080/docs](http://localhost:8080/docs)** for interactive Swagger UI
 (try-it-out included). The raw OpenAPI 2.0 spec is served at
 `http://localhost:8080/docs/doc.json` and also committed under [`docs/`](docs/) for
 offline import (Postman, Insomnia, codegen).
@@ -228,6 +228,7 @@ curl -X POST http://localhost:8080/api/v1/documents \
     "metadata": { "source": "go-intro", "title": "About Go" }
   }'
 ```
+
 ```json
 { "job_id": "a1b2c3...", "status": "queued", "poll_url": "/api/v1/jobs/a1b2c3..." }
 ```
@@ -242,6 +243,7 @@ curl -X PUT "http://localhost:8080/api/v1/documents?source=handbook.txt&title=Ha
   -H "Content-Type: text/plain" \
   --data-binary @handbook.txt
 ```
+
 ```json
 { "job_id": "d4e5f6...", "status": "queued", "poll_url": "/api/v1/jobs/d4e5f6..." }
 ```
@@ -251,6 +253,7 @@ curl -X PUT "http://localhost:8080/api/v1/documents?source=handbook.txt&title=Ha
 ```bash
 curl http://localhost:8080/api/v1/jobs/d4e5f6...
 ```
+
 ```json
 {
   "id": "d4e5f6...",
@@ -272,6 +275,7 @@ query source.
 ```bash
 curl http://localhost:8080/api/v1/documents
 ```
+
 ```json
 {
   "count": 1,
@@ -286,6 +290,7 @@ curl http://localhost:8080/api/v1/documents
 ```bash
 curl -X DELETE http://localhost:8080/api/v1/documents/9f8e7d...
 ```
+
 ```json
 { "document_id": "9f8e7d...", "deleted_chunks": 128 }
 ```
@@ -297,6 +302,7 @@ curl -X POST http://localhost:8080/api/v1/query \
   -H "Content-Type: application/json" \
   -d '{ "question": "How does Go handle concurrency?", "top_k": 3 }'
 ```
+
 ```json
 {
   "answer": "Go provides built-in concurrency through goroutines and channels.",
@@ -322,12 +328,12 @@ Errors use a consistent envelope and meaningful status codes:
 { "error": "document not found" }
 ```
 
-| Status | When |
-|--------|------|
-| `400 Bad Request` | invalid JSON, empty content/question |
-| `404 Not Found` | unknown job, unknown document, or no relevant documents for a query |
-| `413 Payload Too Large` | uploaded file exceeds the limit (32 MiB) |
-| `500 Internal Server Error` | upstream/model/store failure |
+| Status                        | When                                                                |
+| ----------------------------- | ------------------------------------------------------------------- |
+| `400 Bad Request`           | invalid JSON, empty content/question                                |
+| `404 Not Found`             | unknown job, unknown document, or no relevant documents for a query |
+| `413 Payload Too Large`     | uploaded file exceeds the limit (32 MiB)                            |
+| `500 Internal Server Error` | upstream/model/store failure                                        |
 
 ---
 
@@ -396,3 +402,4 @@ docker run --rm -p 8080:8080 --env-file .env rag-server:latest
 ```
 
 ---
+
